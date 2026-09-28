@@ -1,0 +1,110 @@
+{
+  "name": "AI Notes — Android (Kotlin/Compose)",
+
+  // Deliberately a plain Ubuntu base: there is no official Android devcontainer
+  // image, and the community android-sdk features are broken. We install the SDK
+  // ourselves in post-create.sh — more predictable across Codespaces image updates.
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+
+  // Force a machine with enough RAM. Gradle + Kotlin + KSP + Hilt will OOM on 8 GB.
+  // This makes 2-core machines unselectable (they'll show "Below dev container requirements").
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "16gb",
+    "storage": "32gb"
+  },
+
+  "features": {
+    // JDK 17 — matches the project's jvmTarget and is what AGP 8.x expects.
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "17",
+      "jdkDistro": "tem"
+    },
+    // GitHub CLI for convenience (gh codespace, secrets, etc.)
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  "containerEnv": {
+    "ANDROID_HOME": "/usr/local/android-sdk",
+    "ANDROID_SDK_ROOT": "/usr/local/android-sdk",
+    "JAVA_HOME": "/usr/local/sdkman/candidates/java/current",
+    // Kotlin daemon + Gradle daemon both want headroom on a 16 GB box.
+    "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-Xmx3g -Dorg.gradle.daemon=true -Dorg.gradle.parallel=true -Dorg.gradle.caching=true",
+    "KOTLIN_DAEMON_OPTS": "-Xmx2g"
+  },
+
+  // Runs once when the container is created. Installs the Android SDK, accepts
+  // licences non-interactively, writes local.properties, and warms the Gradle cache.
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+
+  // Cheap sanity check each time the codespace starts.
+  "postStartCommand": "bash .devcontainer/post-start.sh",
+
+  // ADB over network: lets you deploy to a physical phone from the codespace.
+  // We do NOT forward an emulator port — Codespaces cannot run the emulator.
+  "forwardPorts": [5555],
+  "portsAttributes": {
+    "5555": {
+      "label": "ADB (your physical device over Wi-Fi)",
+      "onAutoForward": "notify",
+      "protocol": "tcp"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // Kotlin/Java tooling
+        "fwcd.kotlin",
+        "vscjava.vscode-java-pack",
+        "vscjava.vscode-gradle",
+        // Compose/Android niceties that work headlessly
+        "mathiasfrohlich.kotlin",
+        "redhat.vscode-xml",
+        "redhat.vscode-yaml",
+        "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-docker"
+      ],
+      "settings": {
+        "java.jdt.ls.java.home": "/usr/local/sdkman/candidates/java/current",
+        "java.configuration.runtimes": [
+          {
+            "name": "JavaSE-17",
+            "path": "/usr/local/sdkman/candidates/java/current",
+            "default": true
+          }
+        ],
+        // Don't let the Java language server eat all the RAM.
+        "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx2G -Xms512m",
+        "files.watcherExclude": {
+          "**/build/**": true,
+          "**/.gradle/**": true,
+          "**/app/schemas/**": true
+        },
+        "search.exclude": {
+          "**/build": true,
+          "**/.gradle": true
+        },
+        // Kotlin files should be seen as Kotlin, not plain text.
+        "files.associations": {
+          "*.kt": "kotlin",
+          "*.kts": "kotlin"
+        },
+        "editor.formatOnSave": false,
+        "kotlin.compiler.jvmTarget": "17"
+      }
+    }
+  },
+
+  // Remount the Gradle cache as a volume so a rebuild doesn't re-download the world.
+  // Cuts first-build time roughly in half after the codespace is recreated.
+  "mounts": [
+    "source=ai-notes-gradle-cache,target=/home/vscode/.gradle,type=volume",
+    "source=ai-notes-android-sdk,target=/usr/local/android-sdk,type=volume"
+  ],
+
+  "remoteUser": "vscode"
+}
+</｜DSML｜ parameter>
+</｜DSML｜ invoke>
+</｜DSML｜ calls>
